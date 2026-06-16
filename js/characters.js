@@ -328,11 +328,24 @@ export function createGuard(type = 'standard') {
     const visor = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.06), visorMat);
     visor.position.set(0, 1.55, 0.14);
     group.add(visor);
+    group.visor = visor;
 
     // Weapon
     const weapon = createSMG();
     weapon.position.set(0.4, 0.85, 0.15);
     group.add(weapon);
+
+    // HP bar (billboard)
+    const hpBarGroup = new THREE.Group();
+    const hpBarBg = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.08), new THREE.MeshBasicMaterial({color:0x111111,side:THREE.DoubleSide}));
+    hpBarGroup.add(hpBarBg);
+    const hpBarFg = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.06), new THREE.MeshBasicMaterial({color:0x4caf50,side:THREE.DoubleSide}));
+    hpBarFg.position.z = 0.001;
+    hpBarGroup.add(hpBarFg);
+    hpBarGroup.position.y = 1.8;
+    group.add(hpBarGroup);
+    group.hpBar = hpBarGroup;
+    group.hpBarFg = hpBarFg;
 
     // Type badge
     if (type === 'elite') {
