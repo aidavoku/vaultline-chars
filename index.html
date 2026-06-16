@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAULTLINE — Character Models</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;font-family:'Courier New',monospace;overflow:hidden;color:#c0c0c0;width:100vw;height:100vh}
+canvas{display:block;width:100%;height:100%}
+#ui{position:fixed;top:0;left:0;width:100%;padding:15px 20px;z-index:10;pointer-events:none}
+#ui h1{font-size:24px;color:#00f0ff;letter-spacing:6px;margin:0;font-weight:normal;text-shadow:0 0 20px rgba(0,240,255,0.3)}
+#ui .sub{font-size:10px;color:#444;letter-spacing:3px;margin-top:2px}
+#controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;pointer-events:auto}
+.ctrl-btn{padding:8px 16px;background:transparent;border:1px solid #333;color:#888;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;letter-spacing:1px;transition:all 0.15s}
+.ctrl-btn:hover{border-color:#00f0ff;color:#00f0ff}
+.ctrl-btn.active{border-color:#00f0ff;color:#00f0ff;background:rgba(0,240,255,0.05)}
+#info{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);text-align:center;z-index:10;pointer-events:none}
+#info .name{font-size:14px;color:#00f0ff;letter-spacing:2px}
+#info .desc{font-size:10px;color:#555;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="ui">
+  <h1>VAULTLINE</h1>
+  <div class="sub">// CHARACTER MODELS — v0.1</div>
+</div>
+<div id="info">
+  <div class="name" id="char-name">OPERATOR</div>
+  <div class="desc" id="char-desc">Click & drag to rotate • Scroll to zoom</div>
+</div>
+<div id="controls">
+  <button class="ctrl-btn active" onclick="showAll()">ALL</button>
+  <button class="ctrl-btn" onclick="showCategory('operator')">OPERATORS</button>
+  <button class="ctrl-btn" onclick="showCategory('guard')">GUARDS</button>
+  <button class="ctrl-btn" onclick="showCategory('other')">OTHER</button>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/controls/OrbitControls.js';
+import { createOperator, createGuard, createCivilian, createDrone, createHelicopter, createCharacterShowcase } from './js/characters.js';
+
+// Scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0f);
+scene.fog = new THREE.FogExp2(0x0a0a0f, 0.03);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 2, 12);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.8;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 1, 0);
+controls.minDistance = 3;
+controls.maxDistance = 20;
+
+// Lights
+const key = new THREE.DirectionalLight(0xffffff, 1.2);
+key.position.set(5, 8, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+scene.add(key);
+
+const fill = new THREE.PointLight(0x00f0ff, 0.6, 25);
+fill.position.set(-3, 3, 4);
+scene.add(fill);
+
+const rim = new THREE.PointLight(0xff6b35, 0.4, 20);
+rim.position.set(4, 2, -3);
+scene.add(rim);
+
+const ambient = new THREE.AmbientLight(0x222233, 0.3);
+scene.add(ambient);
+
+// Floor
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 10),
+    new THREE.MeshStandardMaterial({ color: 0x111120, roughness: 0.8 })
+);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.01;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Grid
+const grid = new THREE.GridHelper(30, 30, 0x1a1a30, 0x0f0f1a);
+grid.position.y = 0;
+scene.add(grid);
+
+// Create characters
+const allChars = [];
+
+// Operators
+const op1 = createOperator({ armorLevel: 1, weaponType: 'rifle', hasCyberware: true, helmet: true });
+op1.position.set(-6, 0, 0);
+scene.add(op1);
+allChars.push({ model: op1, name: 'OPERATOR — Light Armor / Rifle', desc: 'Kiroshi Optics + Light Vest + Rifle', category: 'operator' });
+
+const op2 = createOperator({ armorLevel: 3, weaponType: 'shotgun', hasCyberware: false, helmet: true });
+op2.position.set(-3, 0, 0);
+scene.add(op2);
+allChars.push({ model: op2, name: 'OPERATOR — Heavy Armor / Shotgun', desc: 'Heavy Armor + Subdermal + Shotgun', category: 'operator' });
+
+const op3 = createOperator({ armorLevel: 0, weaponType: 'pistol', hasCyberware: true, helmet: false });
+op3.position.set(0, 0, 0);
+scene.add(op3);
+allChars.push({ model: op3, name: 'OPERATOR — Stealth / Pistol', desc: 'No armor + Synaptic Booster + Pistol', category: 'operator' });
+
+// Guards
+const g1 = createGuard('standard');
+g1.position.set(3, 0, 0);
+scene.add(g1);
+allChars.push({ model: g1, name: 'GUARD — Standard', desc: 'Pistol, basic patrol unit', category: 'guard' });
+
+const g2 = createGuard('elite');
+g2.position.set(5.5, 0, 0);
+scene.add(g2);
+allChars.push({ model: g2, name: 'GUARD — Elite', desc: 'SMG, armored, calls backup', category: 'guard' });
+
+const g3 = createGuard('commander');
+g3.position.set(8, 0, 0);
+scene.add(g3);
+allChars.push({ model: g3, name: 'GUARD — Commander', desc: 'Rifle, triggers lockdown, marks player', category: 'guard' });
+
+// Other
+const civ = createCivilian();
+civ.position.set(10.5, 0, 0);
+scene.add(civ);
+allChars.push({ model: civ, name: 'CIVILIAN', desc: 'Office worker, disguise target', category: 'other' });
+
+const drone = createDrone();
+drone.position.set(13, 1.5, 0);
+scene.add(drone);
+allChars.push({ model: drone, name: 'SECURITY DRONE', desc: 'Patrols airspace, spots intruders', category: 'other' });
+
+// Category filtering
+let currentFilter = 'all';
+window.showCategory = function(cat) {
+    currentFilter = cat;
+    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    applyFilter();
+};
+window.showAll = function() {
+    currentFilter = 'all';
+    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    applyFilter();
+};
+function applyFilter() {
+    for (const c of allChars) {
+        if (currentFilter === 'all' || c.category === currentFilter) {
+            c.model.visible = true;
+        } else {
+            c.model.visible = false;
+        }
+    }
+}
+
+// Raycaster for hover labels
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const nameEl = document.getElementById('char-name');
+const descEl = document.getElementById('char-desc');
+
+renderer.domElement.addEventListener('mousemove', e => {
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    let hovered = null;
+    for (const c of allChars) {
+        if (!c.model.visible) continue;
+        const hits = raycaster.intersectObject(c.model, true);
+        if (hits.length > 0) { hovered = c; break; }
+    }
+
+    if (hovered) {
+        nameEl.textContent = hovered.name;
+        descEl.textContent = hovered.desc;
+        document.body.style.cursor = 'pointer';
+    } else {
+        nameEl.textContent = 'VAULTLINE';
+        descEl.textContent = 'Hover over a character • Drag to rotate • Scroll to zoom';
+        document.body.style.cursor = 'default';
+    }
+});
+
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animate
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    // Bob drones
+    for (const c of allChars) {
+        if (c.name.includes('DRONE')) {
+            c.model.position.y = 1.5 + Math.sin(Date.now() * 0.002) * 0.2;
+            c.model.rotation.y += 0.005;
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
